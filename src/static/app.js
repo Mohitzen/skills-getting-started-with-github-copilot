@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const template = document.getElementById("activity-template");
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -10,24 +11,41 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear loading message / previous cards
       activitiesList.innerHTML = "";
 
-      // Populate activities list
+      // Reset select options (keep placeholder)
+      activitySelect.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
+
+      // Populate activities list using template
       Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "activity-card";
+        const node = template.content.cloneNode(true);
+        const card = node.querySelector(".activity-card");
 
+        node.querySelector(".activity-title").textContent = name;
+        node.querySelector(".activity-desc").textContent = details.description;
+        node.querySelector(".activity-schedule").innerHTML = `<strong>Schedule:</strong> ${details.schedule}`;
+        node.querySelector(".activity-capacity").innerHTML = `<strong>Capacity:</strong> ${details.max_participants}`;
+
+        // Availability
         const spotsLeft = details.max_participants - details.participants.length;
+        const availabilityEl = document.createElement("p");
+        availabilityEl.innerHTML = `<strong>Availability:</strong> ${spotsLeft} spots left`;
+        card.appendChild(availabilityEl);
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
+        // Participants list
+        const list = node.querySelector(".participants-list");
+        if (details.participants && details.participants.length) {
+          details.participants.forEach(email => {
+            const li = document.createElement("li");
+            li.innerHTML = `<small>${email}</small>`;
+            list.appendChild(li);
+          });
+        } else {
+          list.classList.add("empty");
+        }
 
-        activitiesList.appendChild(activityCard);
+        activitiesList.appendChild(node);
 
         // Add option to select dropdown
         const option = document.createElement("option");
@@ -60,11 +78,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        messageDiv.className = "message success";
         signupForm.reset();
+        // Refresh activities to show the newly added participant
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        messageDiv.className = "message error";
       }
 
       messageDiv.classList.remove("hidden");
@@ -75,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 5000);
     } catch (error) {
       messageDiv.textContent = "Failed to sign up. Please try again.";
-      messageDiv.className = "error";
+      messageDiv.className = "message error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
     }
