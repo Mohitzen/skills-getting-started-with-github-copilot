@@ -19,6 +19,24 @@
           <!-- Activities will be loaded here -->
           <p>Loading activities...</p>
         </div>
+
+        <!-- Template for activity cards (hidden) -->
+        <template id="activity-template">
+          <div class="activity-card">
+            <h4 class="activity-title"><!-- name --></h4>
+            <p class="activity-desc"><!-- description --></p>
+            <p class="activity-schedule"><strong>Schedule:</strong> <!-- schedule --></p>
+            <p class="activity-capacity"><strong>Capacity:</strong> <!-- max_participants --></p>
+
+            <!-- Participants section -->
+            <div class="participants-section">
+              <h5>Participants</h5>
+              <ul class="participants-list">
+                <!-- JS should insert <li>email@...</li> items here -->
+              </ul>
+            </div>
+          </div>
+        </template>
       </section>
 
       <section id="signup-container">
