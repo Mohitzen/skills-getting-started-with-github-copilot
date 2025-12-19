@@ -165,7 +165,7 @@ footer {
   max-height: 160px;
   overflow: auto;
 }
-
+ 
 .participants-list li {
   display: flex;
   align-items: center;

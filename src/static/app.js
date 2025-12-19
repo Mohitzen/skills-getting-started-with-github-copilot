@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const second = parts[1] ? parts[1].charAt(0) : (local.charAt(1) || "");
     return (first + second).toUpperCase();
   }
-
+ 
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
