@@ -5,6 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const messageDiv = document.getElementById("message");
   const template = document.getElementById("activity-template");
 
+  // Utility: derive initials from email local-part
+  function getInitials(email) {
+    if (!email) return "?";
+    const local = email.split("@")[0];
+    const parts = local.split(/[\.\-_]/).filter(Boolean);
+    const first = (parts[0] || local).charAt(0);
+    const second = parts[1] ? parts[1].charAt(0) : (local.charAt(1) || "");
+    return (first + second).toUpperCase();
+  }
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -33,12 +43,59 @@ document.addEventListener("DOMContentLoaded", () => {
         availabilityEl.innerHTML = `<strong>Availability:</strong> ${spotsLeft} spots left`;
         card.appendChild(availabilityEl);
 
-        // Participants list
+        // Participants list (avatar + email + delete)
         const list = node.querySelector(".participants-list");
         if (details.participants && details.participants.length) {
+          // ensure empty state not shown
+          list.classList.remove("empty");
           details.participants.forEach(email => {
             const li = document.createElement("li");
-            li.innerHTML = `<small>${email}</small>`;
+
+            const avatar = document.createElement("span");
+            avatar.className = "avatar";
+            avatar.textContent = getInitials(email);
+
+            const emailSpan = document.createElement("span");
+            emailSpan.className = "participant-email";
+            emailSpan.textContent = email;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "delete-btn";
+            deleteBtn.title = `Remove ${email}`;
+            deleteBtn.innerHTML = "✖";
+
+            // Delete handler: call DELETE endpoint to unregister participant
+            deleteBtn.addEventListener("click", async () => {
+              if (!confirm(`Remove ${email} from ${name}?`)) return;
+              try {
+                const res = await fetch(
+                  `/activities/${encodeURIComponent(name)}/signup?email=${encodeURIComponent(email)}`,
+                  { method: "DELETE" }
+                );
+                const result = await res.json();
+                if (res.ok) {
+                  messageDiv.textContent = result.message;
+                  messageDiv.className = "message success";
+                  // refresh list
+                  fetchActivities();
+                } else {
+                  messageDiv.textContent = result.detail || "Failed to remove participant";
+                  messageDiv.className = "message error";
+                }
+              } catch (err) {
+                console.error("Error removing participant:", err);
+                messageDiv.textContent = "Failed to remove participant. Please try again.";
+                messageDiv.className = "message error";
+              }
+              messageDiv.classList.remove("hidden");
+              setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+            });
+
+            li.appendChild(avatar);
+            li.appendChild(emailSpan);
+            li.appendChild(deleteBtn);
+            li.title = email;
             list.appendChild(li);
           });
         } else {
